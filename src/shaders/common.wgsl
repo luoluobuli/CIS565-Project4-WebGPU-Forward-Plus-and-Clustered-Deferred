@@ -11,15 +11,27 @@ struct LightSet {
 }
 
 // TODO-2: you may want to create a ClusterSet struct similar to LightSet
+struct ClusterAABB { // 24 bytes: 6 * 4 bytes
+    minX : f32,
+    maxX : f32,
+    minY : f32,
+    maxY : f32,
+    minZ : f32,
+    maxZ : f32
+}
 
-struct CameraUniforms {
+struct ClusterSet { // cluster num * 24 bytes
+    aabbs: array<ClusterAABB>
+}
+
+struct CameraUniforms { // 96 bytes: 23 * 4 bytes + 4 bytes padding
     // DONE-1.3: add an entry for the view proj mat (of type mat4x4f)
     viewProjMat : mat4x4f,
-    clusterCountX : f32,
-    clusterCountY : f32,
-    clusterCountZ : f32,
-    screenWidth : f32,
-    screenHeight : f32,
+    clusterCountX : u32,
+    clusterCountY : u32,
+    clusterCountZ : u32,
+    screenWidth : u32,
+    screenHeight : u32,
     far : f32,
     near : f32
 }

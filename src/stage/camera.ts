@@ -3,7 +3,7 @@ import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(24 * 4); // 23 floats + 4 bytes padding
+    readonly buffer = new ArrayBuffer(24 * 4); // 23 floats + padding
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) { // 16 * 4 bytes = 64 bytes
@@ -14,33 +14,18 @@ class CameraUniforms {
     }
 
     // TODO-2: add extra functions to set values needed for light clustering here
-    set clusterCountX(num: number) { // 4 bytes
-        this.floatView[16] = num;
-    }
+    set clusterCountX(num: number) { this.floatView[16] = num; }
+    set clusterCountY(num: number) { this.floatView[17] = num; }
+    set clusterCountZ(num: number) { this.floatView[18] = num; }
+    set screenWidth(num: number) { this.floatView[19] = num; }
+    set screenHeight(num: number) { this.floatView[20] = num; }
+    set far(num: number) { this.floatView[21] = num; }
+    set near(num: number) { this.floatView[22] = num; }
 
-    set clusterCountY(num: number) { // 4 bytes
-        this.floatView[17] = num;
-    }
-
-    set clusterCountZ(num: number) { // 4 bytes
-        this.floatView[18] = num;
-    }
-
-    set screenWidth(num: number) { // 4 bytes
-        this.floatView[19] = num;
-    }
-
-    set screenHeight(num: number) { // 4 bytes
-        this.floatView[20] = num;
-    }
-
-    set far(num: number) { // 4 bytes
-        this.floatView[21] = num;
-    }
-
-    set near(num: number) { // 4 bytes
-        this.floatView[22] = num;
-    }
+    // Getters
+    get clusterCountX(): number { return this.floatView[16]; }
+    get clusterCountY(): number { return this.floatView[17]; }
+    get clusterCountZ(): number { return this.floatView[18]; }
 }
 
 export class Camera {
@@ -59,9 +44,9 @@ export class Camera {
 
     static readonly nearPlane = 0.1;
     static readonly farPlane = 1000;
-    static readonly clusterCountX = 4;
-    static readonly clusterCountY = 4;
-    static readonly clusterCountZ = 4;
+    static readonly clusterCountX = 16;
+    static readonly clusterCountY = 8;
+    static readonly clusterCountZ = 8;
 
     keys: { [key: string]: boolean } = {};
 
