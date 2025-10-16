@@ -3,14 +3,44 @@ import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(16 * 4);
+    readonly buffer = new ArrayBuffer(24 * 4); // 23 floats + 4 bytes padding
     private readonly floatView = new Float32Array(this.buffer);
 
-    set viewProjMat(mat: Float32Array) {
-        // TODO-1.1: set the first 16 elements of `this.floatView` to the input `mat`
+    set viewProjMat(mat: Float32Array) { // 16 * 4 bytes = 64 bytes
+        // DONE-1.1: set the first 16 elements of `this.floatView` to the input `mat`
+        for (let i = 0; i < 16; ++i) {
+            this.floatView[i] = mat[i];
+        }
     }
 
     // TODO-2: add extra functions to set values needed for light clustering here
+    set clusterCountX(num: number) { // 4 bytes
+        this.floatView[16] = num;
+    }
+
+    set clusterCountY(num: number) { // 4 bytes
+        this.floatView[17] = num;
+    }
+
+    set clusterCountZ(num: number) { // 4 bytes
+        this.floatView[18] = num;
+    }
+
+    set screenWidth(num: number) { // 4 bytes
+        this.floatView[19] = num;
+    }
+
+    set screenHeight(num: number) { // 4 bytes
+        this.floatView[20] = num;
+    }
+
+    set far(num: number) { // 4 bytes
+        this.floatView[21] = num;
+    }
+
+    set near(num: number) { // 4 bytes
+        this.floatView[22] = num;
+    }
 }
 
 export class Camera {
@@ -29,15 +59,22 @@ export class Camera {
 
     static readonly nearPlane = 0.1;
     static readonly farPlane = 1000;
+    static readonly clusterCountX = 4;
+    static readonly clusterCountY = 4;
+    static readonly clusterCountZ = 4;
 
     keys: { [key: string]: boolean } = {};
 
     constructor () {
-        // TODO-1.1: set `this.uniformsBuffer` to a new buffer of size `this.uniforms.buffer.byteLength`
+        // DONE-1.1: set `this.uniformsBuffer` to a new buffer of size `this.uniforms.buffer.byteLength`
         // ensure the usage is set to `GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST` since we will be copying to this buffer
         // check `lights.ts` for examples of using `device.createBuffer()`
         //
         // note that you can add more variables (e.g. inverse proj matrix) to this buffer in later parts of the assignment
+        this.uniformsBuffer = device.createBuffer({
+            size: this.uniforms.buffer.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
 
         this.projMat = mat4.perspective(toRadians(fovYDegrees), aspectRatio, Camera.nearPlane, Camera.farPlane);
 
@@ -74,7 +111,7 @@ export class Camera {
         front[0] = Math.cos(toRadians(this.yaw)) * Math.cos(toRadians(this.pitch));
         front[1] = Math.sin(toRadians(this.pitch));
         front[2] = Math.sin(toRadians(this.yaw)) * Math.cos(toRadians(this.pitch));
-
+        
         this.cameraFront = vec3.normalize(front);
         this.cameraRight = vec3.normalize(vec3.cross(this.cameraFront, [0, 1, 0]));
         this.cameraUp = vec3.normalize(vec3.cross(this.cameraRight, this.cameraFront));
@@ -128,11 +165,20 @@ export class Camera {
         const lookPos = vec3.add(this.cameraPos, vec3.scale(this.cameraFront, 1));
         const viewMat = mat4.lookAt(this.cameraPos, lookPos, [0, 1, 0]);
         const viewProjMat = mat4.mul(this.projMat, viewMat);
-        // TODO-1.1: set `this.uniforms.viewProjMat` to the newly calculated view proj mat
+        // DONE-1.1: set `this.uniforms.viewProjMat` to the newly calculated view proj mat
+        this.uniforms.viewProjMat = viewProjMat;
 
         // TODO-2: write to extra buffers needed for light clustering here
+        this.uniforms.clusterCountX = Camera.clusterCountX;
+        this.uniforms.clusterCountY = Camera.clusterCountY;
+        this.uniforms.clusterCountZ = Camera.clusterCountZ;
+        this.uniforms.screenWidth = canvas.width;
+        this.uniforms.screenHeight = canvas.height;
+        this.uniforms.near = Camera.nearPlane;
+        this.uniforms.far = Camera.farPlane;
 
-        // TODO-1.1: upload `this.uniforms.buffer` (host side) to `this.uniformsBuffer` (device side)
+        // DONE-1.1: upload `this.uniforms.buffer` (host side) to `this.uniformsBuffer` (device side)
         // check `lights.ts` for examples of using `device.queue.writeBuffer()`
+        device.queue.writeBuffer(this.uniformsBuffer, 0, this.uniforms.buffer);
     }
 }
