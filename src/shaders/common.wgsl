@@ -24,9 +24,11 @@ struct ClusterSet { // cluster num * 24 bytes
     aabbs: array<ClusterAABB>
 }
 
-struct CameraUniforms { // 96 bytes: 23 * 4 bytes + 4 bytes padding
+struct CameraUniforms { // 224 bytes: 55 * 4 bytes + 4 bytes padding
     // DONE-1.3: add an entry for the view proj mat (of type mat4x4f)
     viewProjMat : mat4x4f,
+    projMat : mat4x4f,
+    viewMat : mat4x4f,
     clusterCountX : u32,
     clusterCountY : u32,
     clusterCountZ : u32,

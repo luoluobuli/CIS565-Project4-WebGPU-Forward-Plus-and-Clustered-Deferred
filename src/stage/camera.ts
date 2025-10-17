@@ -3,29 +3,35 @@ import { toRadians } from "../math_util";
 import { device, canvas, fovYDegrees, aspectRatio } from "../renderer";
 
 class CameraUniforms {
-    readonly buffer = new ArrayBuffer(24 * 4); // 23 floats + padding
+    readonly buffer = new ArrayBuffer(56 * 4); // 55 floats + padding
     private readonly floatView = new Float32Array(this.buffer);
 
     set viewProjMat(mat: Float32Array) { // 16 * 4 bytes = 64 bytes
         // DONE-1.1: set the first 16 elements of `this.floatView` to the input `mat`
-        for (let i = 0; i < 16; ++i) {
-            this.floatView[i] = mat[i];
-        }
+        this.floatView.set(mat, 0);
     }
 
     // TODO-2: add extra functions to set values needed for light clustering here
-    set clusterCountX(num: number) { this.floatView[16] = num; }
-    set clusterCountY(num: number) { this.floatView[17] = num; }
-    set clusterCountZ(num: number) { this.floatView[18] = num; }
-    set screenWidth(num: number) { this.floatView[19] = num; }
-    set screenHeight(num: number) { this.floatView[20] = num; }
-    set far(num: number) { this.floatView[21] = num; }
-    set near(num: number) { this.floatView[22] = num; }
+    set projMat(mat: Float32Array) { // 16 * 4 byets = 64 bytes
+        this.floatView.set(mat, 16);
+    }
+
+    set viewMat(mat: Float32Array) { // 16 * 4 = 64 bytes
+        this.floatView.set(mat, 32);
+    }
+    
+    set clusterCountX(num: number) { this.floatView[48] = num; }
+    set clusterCountY(num: number) { this.floatView[52] = num; }
+    set clusterCountZ(num: number) { this.floatView[56] = num; }
+    set screenWidth(num: number) { this.floatView[60] = num; }
+    set screenHeight(num: number) { this.floatView[64] = num; }
+    set far(num: number) { this.floatView[68] = num; }
+    set near(num: number) { this.floatView[72] = num; }
 
     // Getters
-    get clusterCountX(): number { return this.floatView[16]; }
-    get clusterCountY(): number { return this.floatView[17]; }
-    get clusterCountZ(): number { return this.floatView[18]; }
+    get clusterCountX(): number { return this.floatView[48]; }
+    get clusterCountY(): number { return this.floatView[52]; }
+    get clusterCountZ(): number { return this.floatView[56]; }
 }
 
 export class Camera {
@@ -154,6 +160,8 @@ export class Camera {
         this.uniforms.viewProjMat = viewProjMat;
 
         // TODO-2: write to extra buffers needed for light clustering here
+        this.uniforms.projMat = this.projMat;
+        this.uniforms.viewMat = viewMat;
         this.uniforms.clusterCountX = Camera.clusterCountX;
         this.uniforms.clusterCountY = Camera.clusterCountY;
         this.uniforms.clusterCountZ = Camera.clusterCountZ;
