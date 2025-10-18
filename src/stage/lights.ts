@@ -102,9 +102,10 @@ export class Lights {
         
         // Bind cluster set
         const numClusters = camera.uniforms.clusterCountX * camera.uniforms.clusterCountY * camera.uniforms.clusterCountZ;
+        const clusterSize = shaders.constants.maxLightsPerCluster * 4 + 28;
         this.clusterSetStorageBuffer = device.createBuffer({
             label: "clusters",
-            size: numClusters * 24,
+            size: numClusters * clusterSize,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
         });
         

@@ -41,13 +41,13 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     let clusterIdx = ix + (iy * camera.clusterCountX) + (iz * camera.clusterCountX * camera.clusterCountZ);
 
     // ------------------- Cluster Bounding box ----------------------
-    var aabb = ClusterAABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    var aabb = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     
     // XY bounds - NDC
     let minX = f32(ix) / f32(camera.clusterCountX) * 2.0 - 1.0;
     let maxX = f32(ix + 1) / f32(camera.clusterCountX) * 2.0 - 1.0;
-    let minY = 1.0 - f32(iy) / camera.clusterCountY * 2.0;
-    let maxY = 1.0 - f32(iy + 1) / camera.clusterCountY * 2.0;
+    let minY = 1.0 - f32(iy) / f32(camera.clusterCountY) * 2.0;
+    let maxY = 1.0 - f32(iy + 1) / f32(camera.clusterCountY) * 2.0;
 
     let corners = array<vec4<f32>, 8>(
         vec4<f32>(minX, minY, -1.0, 1.0),
@@ -61,7 +61,7 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     );
 
     // Get view space coordinates
-    let invProjMat = inverse(camera.projMat);
+    let invProjMat = camera.invProjMat;
 
     var minView = vec3<f32>( 1e9,  1e9,  1e9);
     var maxView = vec3<f32>(-1e9, -1e9, -1e9);
@@ -86,11 +86,25 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     aabb.minZ = -maxZ;
     aabb.maxZ = -minZ;
 
+    clusterSet.clusters[clusterIdx].aabb = aabb;
 
     // ---------------------- Assign lights --------------------------------
     let lightCnt = 0;
 
-    for (var i = 0; i < lightSet.numLights; ++i) {
+    for (var i = 0u; i < lightSet.numLights; i++) {
         let light = lightSet.lights[i];
+        let lightPosView = vec3(camera.viewMat * vec4(light.pos, 1.0)); // convert to view space
+        let closestPos = vec3<f32>(
+            clamp(lightPosView.x, aabb.minX, aabb.maxX),
+            clamp(lightPosView.y, aabb.minY, aabb.maxY),
+            clamp(lightPosView.z, aabb.minZ, aabb.maxZ)
+        );
+        let d = lightPosView - closestPos;
+        let dist2 = dot(d, d);
+        if (dist2 <= ${lightRadius} * ${lightRadius}) {
+            clusterSet.clusters[clusterIdx].lightIdx[lightCnt] = i;
+            lightCnt++;
+        }
     }
+    clusterSet.clusters[clusterIdx].numLights = lightCnt;
 }

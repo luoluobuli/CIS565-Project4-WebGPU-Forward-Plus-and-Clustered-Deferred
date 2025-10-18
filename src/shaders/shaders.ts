@@ -33,7 +33,8 @@ export const constants = {
     clusteringWorkgroupSizeY: 4,
     clusteringWorkgroupSizeZ: 4,
 
-    lightRadius: 2
+    lightRadius: 2,
+    maxLightsPerCluster: 100
 };
 
 // =================================

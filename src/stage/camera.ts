@@ -12,7 +12,7 @@ class CameraUniforms {
     }
 
     // TODO-2: add extra functions to set values needed for light clustering here
-    set projMat(mat: Float32Array) { // 16 * 4 byets = 64 bytes
+    set invProjMat(mat: Float32Array) { // 16 * 4 byets = 64 bytes
         this.floatView.set(mat, 16);
     }
 
@@ -21,17 +21,17 @@ class CameraUniforms {
     }
     
     set clusterCountX(num: number) { this.floatView[48] = num; }
-    set clusterCountY(num: number) { this.floatView[52] = num; }
-    set clusterCountZ(num: number) { this.floatView[56] = num; }
-    set screenWidth(num: number) { this.floatView[60] = num; }
-    set screenHeight(num: number) { this.floatView[64] = num; }
-    set far(num: number) { this.floatView[68] = num; }
-    set near(num: number) { this.floatView[72] = num; }
+    set clusterCountY(num: number) { this.floatView[49] = num; }
+    set clusterCountZ(num: number) { this.floatView[50] = num; }
+    set screenWidth(num: number) { this.floatView[51] = num; }
+    set screenHeight(num: number) { this.floatView[52] = num; }
+    set far(num: number) { this.floatView[53] = num; }
+    set near(num: number) { this.floatView[54] = num; }
 
     // Getters
     get clusterCountX(): number { return this.floatView[48]; }
-    get clusterCountY(): number { return this.floatView[52]; }
-    get clusterCountZ(): number { return this.floatView[56]; }
+    get clusterCountY(): number { return this.floatView[49]; }
+    get clusterCountZ(): number { return this.floatView[50]; }
 }
 
 export class Camera {
@@ -160,7 +160,7 @@ export class Camera {
         this.uniforms.viewProjMat = viewProjMat;
 
         // TODO-2: write to extra buffers needed for light clustering here
-        this.uniforms.projMat = this.projMat;
+        this.uniforms.invProjMat = mat4.inverse(this.projMat);
         this.uniforms.viewMat = viewMat;
         this.uniforms.clusterCountX = Camera.clusterCountX;
         this.uniforms.clusterCountY = Camera.clusterCountY;
