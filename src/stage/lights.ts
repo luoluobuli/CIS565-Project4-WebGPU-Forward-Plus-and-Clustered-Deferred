@@ -101,17 +101,13 @@ export class Lights {
         // TODO-2: initialize layouts, pipelines, textures, etc. needed for light clustering here
         
         // Bind cluster set
-        const numClusters = camera.uniforms.clusterCountX * camera.uniforms.clusterCountY * camera.uniforms.clusterCountZ;
+        const numClusters = shaders.constants.clusterCountX * shaders.constants.clusterCountY * shaders.constants.clusterCountZ;
         const clusterSize = shaders.constants.maxLightsPerCluster * 4 + 28;
         this.clusterSetStorageBuffer = device.createBuffer({
             label: "clusters",
             size: numClusters * clusterSize,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
         });
-        console.log("numClusters:", numClusters);
-        console.log("clusterSize:", clusterSize);
-        console.log("Total cluster buffer size:", numClusters * clusterSize);
-        console.log("Cluster counts", camera.uniforms.clusterCountX, camera.uniforms.clusterCountY, camera.uniforms.clusterCountZ);
 
         this.clusteringComputeBindGroupLayout = device.createBindGroupLayout({
             label: "clustering compute bind group layout",
@@ -190,9 +186,9 @@ export class Lights {
         computePass.setPipeline(this.clusteringComputePipeline);
         computePass.setBindGroup(0, this.clusteringComputeBindGroup);
 
-        const workgroupCountX = Math.ceil(this.camera.uniforms.clusterCountX / shaders.constants.clusteringWorkgroupSizeX);
-        const workgroupCountY = Math.ceil(this.camera.uniforms.clusterCountY / shaders.constants.clusteringWorkgroupSizeY);
-        const workgroupCountZ = Math.ceil(this.camera.uniforms.clusterCountZ / shaders.constants.clusteringWorkgroupSizeZ);
+        const workgroupCountX = Math.ceil(shaders.constants.clusterCountX / shaders.constants.clusteringWorkgroupSizeX);
+        const workgroupCountY = Math.ceil(shaders.constants.clusterCountY / shaders.constants.clusteringWorkgroupSizeY);
+        const workgroupCountZ = Math.ceil(shaders.constants.clusterCountZ / shaders.constants.clusteringWorkgroupSizeZ);
         computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, workgroupCountZ);
 
         computePass.end();

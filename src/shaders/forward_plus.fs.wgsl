@@ -44,11 +44,15 @@ fn main(in: FragmentInput) -> @location(0) vec4f
     let screenX = (ndcPos.x * 0.5 + 0.5) * f32(camera.screenWidth); // screen space
     let screenY = (ndcPos.y * 0.5 + 0.5) * f32(camera.screenHeight);
 
-    let clusterSizeX = f32(camera.screenWidth) / f32(camera.clusterCountX);
-    let clusterSizeY = f32(camera.screenHeight) / f32(camera.clusterCountY);
+    let countX = u32(${clusterCountX});
+    let countY = u32(${clusterCountY});
+    let countZ = u32(${clusterCountZ});
 
-    let clusterX = clamp(u32(screenX / clusterSizeX), 0u, camera.clusterCountX - 1u);
-    let clusterY = clamp(u32(screenY / clusterSizeY), 0u, camera.clusterCountY - 1u);
+    let clusterSizeX = f32(camera.screenWidth) / f32(countX);
+    let clusterSizeY = f32(camera.screenHeight) / f32(countY);
+
+    let clusterX = clamp(u32(screenX / clusterSizeX), 0u, countX - 1u);
+    let clusterY = clamp(u32(screenY / clusterSizeY), 0u, countY - 1u);
 
     // Z
     let zNear = camera.near;
@@ -56,9 +60,9 @@ fn main(in: FragmentInput) -> @location(0) vec4f
     let viewZ = -viewPos.z;
 
     let logDepth = log(-viewPos.z / camera.near) / log(camera.far / camera.near);
-    let clusterZ = clamp(u32(logDepth * f32(camera.clusterCountZ)), 0u, camera.clusterCountZ - 1u);
+    let clusterZ = clamp(u32(logDepth * f32(countZ)), 0u, countZ - 1u);
 
-    let clusterIdx = clusterX + clusterY * camera.clusterCountX + clusterZ * camera.clusterCountX * camera.clusterCountY;
+    let clusterIdx = clusterX + clusterY * countX + clusterZ * countX * countY;
 
     // Get cluster
     let cluster = clusterSet.clusters[clusterIdx];

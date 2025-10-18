@@ -20,18 +20,10 @@ class CameraUniforms {
         this.floatView.set(mat, 32);
     }
     
-    set clusterCountX(num: number) { this.floatView[48] = num; }
-    set clusterCountY(num: number) { this.floatView[49] = num; }
-    set clusterCountZ(num: number) { this.floatView[50] = num; }
-    set screenWidth(num: number) { this.floatView[51] = num; }
-    set screenHeight(num: number) { this.floatView[52] = num; }
-    set far(num: number) { this.floatView[53] = num; }
-    set near(num: number) { this.floatView[54] = num; }
-
-    // Getters
-    get clusterCountX(): number { return this.floatView[48]; }
-    get clusterCountY(): number { return this.floatView[49]; }
-    get clusterCountZ(): number { return this.floatView[50]; }
+    set screenWidth(num: number) { this.floatView[48] = num; }
+    set screenHeight(num: number) { this.floatView[49] = num; }
+    set far(num: number) { this.floatView[50] = num; }
+    set near(num: number) { this.floatView[51] = num; }
 }
 
 export class Camera {
@@ -67,6 +59,11 @@ export class Camera {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
+        this.uniforms.screenWidth = canvas.width;
+        this.uniforms.screenHeight = canvas.height;
+        this.uniforms.near = Camera.nearPlane;
+        this.uniforms.far = Camera.farPlane;
+
         this.projMat = mat4.perspective(toRadians(fovYDegrees), aspectRatio, Camera.nearPlane, Camera.farPlane);
 
         this.rotateCamera(0, 0); // set initial camera vectors
@@ -78,10 +75,6 @@ export class Camera {
         canvas.addEventListener('mousedown', () => canvas.requestPointerLock());
         canvas.addEventListener('mouseup', () => document.exitPointerLock());
         canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
-
-        this.uniforms.clusterCountX = Camera.clusterCountX;
-        this.uniforms.clusterCountY = Camera.clusterCountY;
-        this.uniforms.clusterCountZ = Camera.clusterCountZ;
     }
 
     private onKeyEvent(event: KeyboardEvent, down: boolean) {
@@ -166,10 +159,6 @@ export class Camera {
         // TODO-2: write to extra buffers needed for light clustering here
         this.uniforms.invProjMat = mat4.inverse(this.projMat);
         this.uniforms.viewMat = viewMat;
-        this.uniforms.screenWidth = canvas.width;
-        this.uniforms.screenHeight = canvas.height;
-        this.uniforms.near = Camera.nearPlane;
-        this.uniforms.far = Camera.farPlane;
 
         // DONE-1.1: upload `this.uniforms.buffer` (host side) to `this.uniformsBuffer` (device side)
         // check `lights.ts` for examples of using `device.queue.writeBuffer()`

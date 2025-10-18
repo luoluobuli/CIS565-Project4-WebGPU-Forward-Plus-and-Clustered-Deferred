@@ -32,22 +32,26 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     let iy = globalIdx.y;
     let iz = globalIdx.z;
 
-    if (ix >= camera.clusterCountX || 
-        iy >= camera.clusterCountY ||
-        iz >= camera.clusterCountZ) {
+    let countX = u32(${clusterCountX});
+    let countY = u32(${clusterCountY});
+    let countZ = u32(${clusterCountZ});
+
+    if (ix >= countX || 
+        iy >= countY ||
+        iz >= countZ) {
         return;
     }
 
-    let clusterIdx = ix + (iy * camera.clusterCountX) + (iz * camera.clusterCountX * camera.clusterCountY);
+    let clusterIdx = ix + (iy * countX) + (iz * countX * countY);
 
     // ------------------- Cluster Bounding box ----------------------
     var aabb = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     
     // XY bounds - NDC
-    let minX = f32(ix) / f32(camera.clusterCountX) * 2.0 - 1.0;
-    let maxX = f32(ix + 1) / f32(camera.clusterCountX) * 2.0 - 1.0;
-    let minY = 1.0 - f32(iy) / f32(camera.clusterCountY) * 2.0;
-    let maxY = 1.0 - f32(iy + 1) / f32(camera.clusterCountY) * 2.0;
+    let minX = f32(ix) / f32(countX) * 2.0 - 1.0;
+    let maxX = f32(ix + 1) / f32(countX) * 2.0 - 1.0;
+    let minY = 1.0 - f32(iy) / f32(countY) * 2.0;
+    let maxY = 1.0 - f32(iy + 1) / f32(countY) * 2.0;
 
     let corners = array<vec4<f32>, 8>(
         vec4<f32>(minX, minY, -1.0, 1.0),
@@ -80,8 +84,8 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
 
     // Depth bounds - View
     let r = camera.far / camera.near;
-    let minZ = camera.near * pow(r, f32(iz) / f32(camera.clusterCountZ)); // log slicing
-    let maxZ = camera.near * pow(r, f32(iz + 1) / f32(camera.clusterCountZ));
+    let minZ = camera.near * pow(r, f32(iz) / f32(countZ)); // log slicing
+    let maxZ = camera.near * pow(r, f32(iz + 1) / f32(countZ));
 
     aabb.minZ = -maxZ;
     aabb.maxZ = -minZ;
