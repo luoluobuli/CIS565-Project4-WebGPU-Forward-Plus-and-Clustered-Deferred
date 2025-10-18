@@ -1,7 +1,7 @@
 // TODO-2: implement the light clustering compute shader
-@group(${bindGroup_scene}) @binding(0) var<storage, read_write> lightSet: LightSet;
-@group(${bindGroup_scene}) @binding(1) var<uniform> camera: CameraUniforms;
-@group(${bindGroup_scene}) @binding(2) var<storage, read_write> clusterSet: ClusterSet;
+@group(0) @binding(0) var<storage, read_write> lightSet: LightSet;
+@group(0) @binding(1) var<uniform> camera: CameraUniforms;
+@group(0) @binding(2) var<storage, read_write> clusterSet: ClusterSet;
 
 // ------------------------------------
 // Calculating cluster bounds:
@@ -38,7 +38,7 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
         return;
     }
 
-    let clusterIdx = ix + (iy * camera.clusterCountX) + (iz * camera.clusterCountX * camera.clusterCountZ);
+    let clusterIdx = ix + (iy * camera.clusterCountX) + (iz * camera.clusterCountX * camera.clusterCountY);
 
     // ------------------- Cluster Bounding box ----------------------
     var aabb = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -89,11 +89,11 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     clusterSet.clusters[clusterIdx].aabb = aabb;
 
     // ---------------------- Assign lights --------------------------------
-    let lightCnt = 0;
+    var lightCnt = 0u;
 
     for (var i = 0u; i < lightSet.numLights; i++) {
         let light = lightSet.lights[i];
-        let lightPosView = vec3(camera.viewMat * vec4(light.pos, 1.0)); // convert to view space
+        let lightPosView = (camera.viewMat * vec4(light.pos, 1.0)).xyz; // convert to view space
         let closestPos = vec3<f32>(
             clamp(lightPosView.x, aabb.minX, aabb.maxX),
             clamp(lightPosView.y, aabb.minY, aabb.maxY),
@@ -102,8 +102,11 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
         let d = lightPosView - closestPos;
         let dist2 = dot(d, d);
         if (dist2 <= ${lightRadius} * ${lightRadius}) {
-            clusterSet.clusters[clusterIdx].lightIdx[lightCnt] = i;
+            clusterSet.clusters[clusterIdx].lightInds[lightCnt] = i;
             lightCnt++;
+        }
+        if (lightCnt >= ${maxLightsPerCluster}) {
+            break;
         }
     }
     clusterSet.clusters[clusterIdx].numLights = lightCnt;

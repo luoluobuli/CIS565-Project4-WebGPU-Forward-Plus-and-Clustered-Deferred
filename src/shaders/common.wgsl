@@ -23,7 +23,7 @@ struct AABB { // 24 bytes
 struct Cluster { // 428 bytes
     aabb : AABB, // 24 bytes
     numLights : u32, // 4 bytes
-    lightIdx : array<u32, ${maxLightsPerCluster}> // 400 bytes: maxLights(100) * 4
+    lightInds : array<u32, ${maxLightsPerCluster}> // 400 bytes: maxLights(100) * 4
 }
 
 struct ClusterSet { // cluster num * 428 bytes

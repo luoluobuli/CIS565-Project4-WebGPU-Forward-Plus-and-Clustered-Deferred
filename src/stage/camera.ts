@@ -78,6 +78,10 @@ export class Camera {
         canvas.addEventListener('mousedown', () => canvas.requestPointerLock());
         canvas.addEventListener('mouseup', () => document.exitPointerLock());
         canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
+
+        this.uniforms.clusterCountX = Camera.clusterCountX;
+        this.uniforms.clusterCountY = Camera.clusterCountY;
+        this.uniforms.clusterCountZ = Camera.clusterCountZ;
     }
 
     private onKeyEvent(event: KeyboardEvent, down: boolean) {
@@ -162,9 +166,6 @@ export class Camera {
         // TODO-2: write to extra buffers needed for light clustering here
         this.uniforms.invProjMat = mat4.inverse(this.projMat);
         this.uniforms.viewMat = viewMat;
-        this.uniforms.clusterCountX = Camera.clusterCountX;
-        this.uniforms.clusterCountY = Camera.clusterCountY;
-        this.uniforms.clusterCountZ = Camera.clusterCountZ;
         this.uniforms.screenWidth = canvas.width;
         this.uniforms.screenHeight = canvas.height;
         this.uniforms.near = Camera.nearPlane;

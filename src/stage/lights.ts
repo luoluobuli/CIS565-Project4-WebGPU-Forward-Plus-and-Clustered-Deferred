@@ -108,7 +108,10 @@ export class Lights {
             size: numClusters * clusterSize,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
         });
-        
+        console.log("numClusters:", numClusters);
+        console.log("clusterSize:", clusterSize);
+        console.log("Total cluster buffer size:", numClusters * clusterSize);
+        console.log("Cluster counts", camera.uniforms.clusterCountX, camera.uniforms.clusterCountY, camera.uniforms.clusterCountZ);
 
         this.clusteringComputeBindGroupLayout = device.createBindGroupLayout({
             label: "clustering compute bind group layout",
@@ -123,7 +126,7 @@ export class Lights {
                     visibility: GPUShaderStage.COMPUTE,
                     buffer: { type: "uniform" }
                 },
-                { // clusterAABB
+                { // clusterSet
                     binding: 2,
                     visibility: GPUShaderStage.COMPUTE,
                     buffer: { type: "storage" }
@@ -185,7 +188,7 @@ export class Lights {
         // implementing clustering here allows for reusing the code in both Forward+ and Clustered Deferred
         const computePass = encoder.beginComputePass();
         computePass.setPipeline(this.clusteringComputePipeline);
-        computePass.setBindGroup(1, this.clusteringComputeBindGroup); // bind group slot: 1
+        computePass.setBindGroup(0, this.clusteringComputeBindGroup);
 
         const workgroupCountX = Math.ceil(this.camera.uniforms.clusterCountX / shaders.constants.clusteringWorkgroupSizeX);
         const workgroupCountY = Math.ceil(this.camera.uniforms.clusterCountY / shaders.constants.clusteringWorkgroupSizeY);

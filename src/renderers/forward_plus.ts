@@ -23,11 +23,16 @@ export class ForwardPlusRenderer extends renderer.Renderer {
                 // DONE-1.2: add an entry for camera uniforms at binding 0, visible to only the vertex shader, and of type "uniform"
                 {
                     binding: 0,
-                    visibility: GPUShaderStage.VERTEX,
+                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
                     buffer: { type: "uniform" }
                 },
                 { // lightSet
                     binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: { type: "read-only-storage" }
+                }, 
+                { // clusterSet
+                    binding: 2,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: { type: "read-only-storage" }
                 }
@@ -48,6 +53,10 @@ export class ForwardPlusRenderer extends renderer.Renderer {
                 {
                     binding: 1,
                     resource: { buffer: this.lights.lightSetStorageBuffer }
+                },
+                {
+                    binding: 2,
+                    resource: { buffer: this.lights.clusterSetStorageBuffer }
                 }
             ]
         });
@@ -99,6 +108,11 @@ export class ForwardPlusRenderer extends renderer.Renderer {
         // - run the clustering compute shader
         // - run the main rendering pass, using the computed clusters for efficient lighting
         const encoder = renderer.device.createCommandEncoder();
+
+        // Run clustering compute shader
+        this.lights.doLightClustering(encoder);
+
+        // Run main rendering pass
         const canvasTextureView = renderer.context.getCurrentTexture().createView();
 
         const renderPass = encoder.beginRenderPass({

@@ -1,7 +1,9 @@
 // TODO-2: implement the Forward+ fragment shader
 
 // See naive.fs.wgsl for basic fragment shader setup; this shader should use light clusters instead of looping over all lights
+@group(${bindGroup_scene}) @binding(0) var<uniform> camera : CameraUniforms;
 @group(${bindGroup_scene}) @binding(1) var<storage, read> lightSet: LightSet;
+@group(${bindGroup_scene}) @binding(2) var<storage, read> clusterSet: ClusterSet;
 
 @group(${bindGroup_material}) @binding(0) var diffuseTex: texture_2d<f32>;
 @group(${bindGroup_material}) @binding(1) var diffuseTexSampler: sampler;
@@ -30,13 +32,46 @@ struct FragmentInput
 @fragment
 fn main(in: FragmentInput) -> @location(0) vec4f
 {
+    // Identify which cluster the pixel is in
+    // Convert pos to view space
+    let viewPos = (camera.viewMat * vec4f(in.pos, 1.0)).xyz;
+
+    // Compute cluster indices
+    // XY
+    let clipPos = camera.viewProjMat * vec4f(in.pos, 1.0); // clip space
+    let ndcPos = clipPos.xyz / clipPos.w; // ndc
+
+    let screenX = (ndcPos.x * 0.5 + 0.5) * f32(camera.screenWidth); // screen space
+    let screenY = (ndcPos.y * 0.5 + 0.5) * f32(camera.screenHeight);
+
+    let clusterSizeX = f32(camera.screenWidth) / f32(camera.clusterCountX);
+    let clusterSizeY = f32(camera.screenHeight) / f32(camera.clusterCountY);
+
+    let clusterX = clamp(u32(screenX / clusterSizeX), 0u, camera.clusterCountX - 1u);
+    let clusterY = clamp(u32(screenY / clusterSizeY), 0u, camera.clusterCountY - 1u);
+
+    // Z
+    let zNear = camera.near;
+    let zFar = camera.far;
+    let viewZ = -viewPos.z;
+
+    let logDepth = log(-viewPos.z / camera.near) / log(camera.far / camera.near);
+    let clusterZ = clamp(u32(logDepth * f32(camera.clusterCountZ)), 0u, camera.clusterCountZ - 1u);
+
+    let clusterIdx = clusterX + clusterY * camera.clusterCountX + clusterZ * camera.clusterCountX * camera.clusterCountY;
+
+    // Get cluster
+    let cluster = clusterSet.clusters[clusterIdx];
+
+    // Shading
     let diffuseColor = textureSample(diffuseTex, diffuseTexSampler, in.uv);
     if (diffuseColor.a < 0.5f) {
         discard;
     }
 
     var totalLightContrib = vec3f(0, 0, 0);
-    for (var lightIdx = 0u; lightIdx < lightSet.numLights; lightIdx++) {
+    for (var i = 0u; i < cluster.numLights; i++) {
+        let lightIdx = cluster.lightInds[i];
         let light = lightSet.lights[lightIdx];
         totalLightContrib += calculateLightContrib(light, in.pos, normalize(in.nor));
     }
