@@ -33,8 +33,8 @@ export const constants = {
     clusteringWorkgroupSizeY: 4,
     clusteringWorkgroupSizeZ: 4,
 
-    clusterCountX: 16,
-    clusterCountY: 8,
+    clusterCountX: 32,
+    clusterCountY: 16,
     clusterCountZ: 8,
 
     lightRadius: 2,

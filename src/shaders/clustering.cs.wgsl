@@ -25,6 +25,16 @@
 
 //     - Store the number of lights assigned to this cluster.
 
+fn ndcToView(x: f32, y: f32, z: f32) -> vec3<f32> {
+    let invProjMat = camera.invProjMat;
+
+    var viewPos = invProjMat * vec4(x, y, z, 1.0);
+    viewPos /= viewPos.w;
+
+    return viewPos.xyz;
+}
+
+
 @compute
 @workgroup_size(${clusteringWorkgroupSizeX}, ${clusteringWorkgroupSizeY}, ${clusteringWorkgroupSizeZ})
 fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
@@ -47,50 +57,52 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     // ------------------- Cluster Bounding box ----------------------
     var aabb = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     
-    // XY bounds - NDC
-    let minX = f32(ix) / f32(countX) * 2.0 - 1.0;
-    let maxX = f32(ix + 1) / f32(countX) * 2.0 - 1.0;
-    let minY = 1.0 - f32(iy) / f32(countY) * 2.0;
-    let maxY = 1.0 - f32(iy + 1) / f32(countY) * 2.0;
+    // XY bounds - screen
+    let clusterSizeX = f32(camera.screenWidth) / f32(countX);
+    let clusterSizeY = f32(camera.screenHeight) / f32(countY);
+    var minX = f32(ix) * clusterSizeX;
+    var maxX = f32(ix + 1) * clusterSizeX;
+    var minY = f32(iy) * clusterSizeY;
+    var maxY = f32(iy + 1) * clusterSizeY;
 
-    let corners = array<vec4<f32>, 8>(
-        vec4<f32>(minX, minY, -1.0, 1.0),
-        vec4<f32>(maxX, minY, -1.0, 1.0),
-        vec4<f32>(minX, maxY, -1.0, 1.0),
-        vec4<f32>(maxX, maxY, -1.0, 1.0),
-        vec4<f32>(minX, minY,  1.0, 1.0),
-        vec4<f32>(maxX, minY,  1.0, 1.0),
-        vec4<f32>(minX, maxY,  1.0, 1.0),
-        vec4<f32>(maxX, maxY,  1.0, 1.0)
-    );
-
-    // Get view space coordinates
-    let invProjMat = camera.invProjMat;
-
-    var minView = vec3<f32>( 1e9,  1e9,  1e9);
-    var maxView = vec3<f32>(-1e9, -1e9, -1e9);
-
-    for (var i = 0u; i < 8u; i++) {
-        var viewPos = invProjMat * corners[i];
-        viewPos /= viewPos.w;
-        minView = min(minView, viewPos.xyz);
-        maxView = max(maxView, viewPos.xyz);
-    }
-
-    aabb.minX = minView.x;
-    aabb.maxX = maxView.x;
-    aabb.minY = minView.y;
-    aabb.maxY = maxView.y;
+    // XY bounds - ndc
+    minX = minX / f32(camera.screenWidth) * 2.0 - 1.0;
+    maxX = maxX / f32(camera.screenWidth) * 2.0 - 1.0;
+    minY = minY / f32(camera.screenHeight) * 2.0 - 1.0;
+    maxY = maxY / f32(camera.screenHeight) * 2.0 - 1.0;
 
     // Depth bounds - View
     let r = camera.far / camera.near;
-    let minZ = camera.near * pow(r, f32(iz) / f32(countZ)); // log slicing
-    let maxZ = camera.near * pow(r, f32(iz + 1) / f32(countZ));
+    let zNear = camera.near * pow(r, f32(iz) / f32(countZ)); // log slicing
+    let zFar = camera.near * pow(r, f32(iz + 1) / f32(countZ));
 
-    aabb.minZ = -maxZ;
-    aabb.maxZ = -minZ;
+    // Get view space coordinates
+    let nearBottomLeft = ndcToView(minX, minY, 0.0);
+    let nearBottomRight = ndcToView(maxX, minY, 0.0);
+    let nearTopLeft = ndcToView(minX, maxY, 0.0);
+    let nearTopRight = ndcToView(maxX, maxY, 0.0);
+
+    let farBottomLeft = ndcToView(minX, minY, 1.0);
+    let farBottomRight = ndcToView(maxX, minY, 1.0);
+    let farTopLeft = ndcToView(minX, maxY, 1.0);
+    let farTopRight = ndcToView(maxX, maxY, 1.0);
+
+    var minPos = min(farTopRight,(min(farTopLeft, min(farBottomRight, 
+        min(farBottomLeft, min(nearTopRight, min(nearTopLeft, 
+        min(nearBottomLeft, nearBottomRight))))))));
+    var maxPos = max(farTopRight,(max(farTopLeft, max(farBottomRight, 
+        max(farBottomLeft, max(nearTopRight, max(nearTopLeft, 
+        max(nearBottomLeft, nearBottomRight))))))));
+
+    aabb.minX = minPos.x;
+    aabb.minY = minPos.y;
+    aabb.minZ = -zFar;
+    aabb.maxX = maxPos.x;
+    aabb.maxY = maxPos.y;
+    aabb.maxZ = -zNear;
 
     clusterSet.clusters[clusterIdx].aabb = aabb;
+
 
     // ---------------------- Assign lights --------------------------------
     var lightCnt = 0u;
@@ -104,8 +116,9 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
             clamp(lightPosView.z, aabb.minZ, aabb.maxZ)
         );
         let d = lightPosView - closestPos;
-        let dist2 = dot(d, d);
-        if (dist2 <= ${lightRadius} * ${lightRadius}) {
+        let d2 = dot(d, d);
+        let radius = f32(${lightRadius});
+        if (d2 <= radius * radius) {
             clusterSet.clusters[clusterIdx].lightInds[lightCnt] = i;
             lightCnt++;
         }

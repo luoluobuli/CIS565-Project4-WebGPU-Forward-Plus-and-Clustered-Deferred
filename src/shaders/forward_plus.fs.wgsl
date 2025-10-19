@@ -32,47 +32,39 @@ struct FragmentInput
 @fragment
 fn main(in: FragmentInput) -> @location(0) vec4f
 {
-    // Identify which cluster the pixel is in
-    // Convert pos to view space
-    let viewPos = (camera.viewMat * vec4f(in.pos, 1.0)).xyz;
-
-    // Compute cluster indices
-    // XY
-    let clipPos = camera.viewProjMat * vec4f(in.pos, 1.0); // clip space
-    let ndcPos = clipPos.xyz / clipPos.w; // ndc
-
-    let screenX = (ndcPos.x * 0.5 + 0.5) * f32(camera.screenWidth); // screen space
-    let screenY = (ndcPos.y * 0.5 + 0.5) * f32(camera.screenHeight);
-
-    let countX = u32(${clusterCountX});
-    let countY = u32(${clusterCountY});
-    let countZ = u32(${clusterCountZ});
-
-    let clusterSizeX = f32(camera.screenWidth) / f32(countX);
-    let clusterSizeY = f32(camera.screenHeight) / f32(countY);
-
-    let clusterX = clamp(u32(screenX / clusterSizeX), 0u, countX - 1u);
-    let clusterY = clamp(u32(screenY / clusterSizeY), 0u, countY - 1u);
-
-    // Z
-    let zNear = camera.near;
-    let zFar = camera.far;
-    let viewZ = -viewPos.z;
-
-    let logDepth = log(-viewPos.z / camera.near) / log(camera.far / camera.near);
-    let clusterZ = clamp(u32(logDepth * f32(countZ)), 0u, countZ - 1u);
-
-    let clusterIdx = clusterX + clusterY * countX + clusterZ * countX * countY;
-
-    // Get cluster
-    let cluster = clusterSet.clusters[clusterIdx];
-
-    // Shading
     let diffuseColor = textureSample(diffuseTex, diffuseTexSampler, in.uv);
     if (diffuseColor.a < 0.5f) {
         discard;
     }
 
+    // Identify which cluster the pixel is in
+    // Compute cluster indices
+    // XY
+    let clipPos = camera.viewProjMat * vec4f(in.pos, 1.0); // clip space
+    let ndcPos = clipPos.xyz / clipPos.w; // ndc
+
+    let countX = u32(${clusterCountX});
+    let countY = u32(${clusterCountY});
+    let countZ = u32(${clusterCountZ});
+
+    let nx = clamp(ndcPos.x * 0.5 + 0.5, 0.0, 1.0);
+    let ny = clamp(ndcPos.y * 0.5 + 0.5, 0.0, 1.0);
+    let ix = u32(nx * f32(countX));
+    let iy = u32(ny * f32(countY));
+
+    // Z
+    let viewPos = (camera.viewMat * vec4f(in.pos, 1.0)).xyz;
+    let viewZ = -viewPos.z;
+
+    let logDepth = log(-viewPos.z / camera.near) / log(camera.far / camera.near);
+    let iz = u32(logDepth * f32(countZ));
+
+    let clusterIdx = ix + iy * countX + iz * countX * countY;
+
+    // Get cluster
+    let cluster = clusterSet.clusters[clusterIdx];
+
+    // Shading
     var totalLightContrib = vec3f(0, 0, 0);
     for (var i = 0u; i < cluster.numLights; i++) {
         let lightIdx = cluster.lightInds[i];
