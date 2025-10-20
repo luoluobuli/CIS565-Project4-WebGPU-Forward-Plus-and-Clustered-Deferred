@@ -20,13 +20,13 @@ struct AABB { // 24 bytes
     maxZ : f32
 }
 
-struct Cluster { // 428 bytes
+struct Cluster {
     aabb : AABB, // 24 bytes
     numLights : u32, // 4 bytes
-    lightInds : array<u32, ${maxLightsPerCluster}> // 400 bytes: maxLights(100) * 4
+    lightInds : array<u32, ${maxLightsPerCluster}>
 }
 
-struct ClusterSet { // cluster num * 428 bytes
+struct ClusterSet {
     clusters : array<Cluster>
 }
 
@@ -49,7 +49,7 @@ fn rangeAttenuation(distance: f32) -> f32 {
 fn calculateLightContrib(light: Light, posWorld: vec3f, nor: vec3f) -> vec3f {
     let vecToLight = light.pos - posWorld;
     let distToLight = length(vecToLight);
-
+    const amb = 0.1;
     let lambert = max(dot(nor, normalize(vecToLight)), 0.f);
-    return light.color * lambert * rangeAttenuation(distToLight);
+    return light.color * (lambert + amb) * rangeAttenuation(distToLight);
 }

@@ -28,10 +28,10 @@
 fn ndcToView(x: f32, y: f32, z: f32) -> vec3<f32> {
     let invProjMat = camera.invProjMat;
 
-    var viewPos = invProjMat * vec4(x, y, z, 1.0);
+    var viewPos = invProjMat * vec4(x, y, -1.0, 1.0);
     viewPos /= viewPos.w;
 
-    return viewPos.xyz;
+    return viewPos.xyz * (z / -viewPos.z);
 }
 
 
@@ -77,15 +77,15 @@ fn main (@builtin(global_invocation_id) globalIdx: vec3u) {
     let zFar = camera.near * pow(r, f32(iz + 1) / f32(countZ));
 
     // Get view space coordinates
-    let nearBottomLeft = ndcToView(minX, minY, 0.0);
-    let nearBottomRight = ndcToView(maxX, minY, 0.0);
-    let nearTopLeft = ndcToView(minX, maxY, 0.0);
-    let nearTopRight = ndcToView(maxX, maxY, 0.0);
+    let nearBottomLeft = ndcToView(minX, minY, zNear);
+    let nearBottomRight = ndcToView(maxX, minY, zNear);
+    let nearTopLeft = ndcToView(minX, maxY, zNear);
+    let nearTopRight = ndcToView(maxX, maxY, zNear);
 
-    let farBottomLeft = ndcToView(minX, minY, 1.0);
-    let farBottomRight = ndcToView(maxX, minY, 1.0);
-    let farTopLeft = ndcToView(minX, maxY, 1.0);
-    let farTopRight = ndcToView(maxX, maxY, 1.0);
+    let farBottomLeft = ndcToView(minX, minY, zFar);
+    let farBottomRight = ndcToView(maxX, minY, zFar);
+    let farTopLeft = ndcToView(minX, maxY, zFar);
+    let farTopRight = ndcToView(maxX, maxY, zFar);
 
     var minPos = min(farTopRight,(min(farTopLeft, min(farBottomRight, 
         min(farBottomLeft, min(nearTopRight, min(nearTopLeft, 

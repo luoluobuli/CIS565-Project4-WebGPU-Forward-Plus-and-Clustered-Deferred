@@ -14,10 +14,12 @@ export class Lights {
     private camera: Camera;
 
     numLights = 500;
+    // numLights = 128;
     static readonly maxNumLights = 5000;
     static readonly numFloatsPerLight = 8; // vec3f is aligned at 16 byte boundaries
 
     static readonly lightIntensity = 0.1;
+    // static readonly lightIntensity = 1.0;
 
     lightsArray = new Float32Array(Lights.maxNumLights * Lights.numFloatsPerLight);
     lightSetStorageBuffer: GPUBuffer;
@@ -102,11 +104,17 @@ export class Lights {
         
         // Bind cluster set
         const numClusters = shaders.constants.clusterCountX * shaders.constants.clusterCountY * shaders.constants.clusterCountZ;
-        const clusterSize = shaders.constants.maxLightsPerCluster * 4 + 28;
+        // const clusterSize = shaders.constants.maxLightsPerCluster * 4 + 28;
+
+        const headerSize = 28; // aabb (24) + numLights (4)
+        const lightBytes = 4 * shaders.constants.maxLightsPerCluster;
+        const clusterSize = Math.ceil((headerSize + lightBytes) / 16) * 16; // round up to 16B
+        console.log(clusterSize);
+
         this.clusterSetStorageBuffer = device.createBuffer({
             label: "clusters",
             size: numClusters * clusterSize,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
         this.clusteringComputeBindGroupLayout = device.createBindGroupLayout({
@@ -186,10 +194,10 @@ export class Lights {
         computePass.setPipeline(this.clusteringComputePipeline);
         computePass.setBindGroup(0, this.clusteringComputeBindGroup);
 
-        const workgroupCountX = Math.ceil(shaders.constants.clusterCountX / shaders.constants.clusteringWorkgroupSizeX);
-        const workgroupCountY = Math.ceil(shaders.constants.clusterCountY / shaders.constants.clusteringWorkgroupSizeY);
-        const workgroupCountZ = Math.ceil(shaders.constants.clusterCountZ / shaders.constants.clusteringWorkgroupSizeZ);
-        computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, workgroupCountZ);
+        const workgroupSizeX = Math.ceil(shaders.constants.clusterCountX / shaders.constants.clusteringWorkgroupSizeX);
+        const workgroupSizeY = Math.ceil(shaders.constants.clusterCountY / shaders.constants.clusteringWorkgroupSizeY);
+        const workgroupSizeZ = Math.ceil(shaders.constants.clusterCountZ / shaders.constants.clusteringWorkgroupSizeZ);
+        computePass.dispatchWorkgroups(workgroupSizeX, workgroupSizeY, workgroupSizeZ);
 
         computePass.end();
     }

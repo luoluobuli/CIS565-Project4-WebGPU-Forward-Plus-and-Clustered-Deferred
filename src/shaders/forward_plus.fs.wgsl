@@ -65,12 +65,25 @@ fn main(in: FragmentInput) -> @location(0) vec4f
     let cluster = clusterSet.clusters[clusterIdx];
 
     // Shading
+    // var intersectionCnt = 0;
     var totalLightContrib = vec3f(0, 0, 0);
     for (var i = 0u; i < cluster.numLights; i++) {
         let lightIdx = cluster.lightInds[i];
         let light = lightSet.lights[lightIdx];
+        // let light = lightSet.lights[0];
+        // intersectionCnt++;
+        // totalLightContrib += f32(light.color);
         totalLightContrib += calculateLightContrib(light, in.pos, normalize(in.nor));
+        // let vecToLight = light.pos - in.pos;
+        // let distToLight = length(vecToLight);
+
+        // let lambert = max(dot(normalize(in.nor), normalize(vecToLight)), 0.f);
+        // totalLightContrib += light.color * lambert;
     }
+    // var totalLightContrib = calculateLightContrib(lightSet.lights[0], in.pos, normalize(in.nor));
+    // return vec4(vec3(f32(cluster.numLights)) / 10.0, 1.0);
+
+    // return vec4(diffuseColor.rgb, 1.0);
 
     var finalColor = diffuseColor.rgb * totalLightContrib;
     return vec4(finalColor, 1);
