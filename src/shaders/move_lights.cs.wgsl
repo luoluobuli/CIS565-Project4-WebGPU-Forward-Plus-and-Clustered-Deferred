@@ -63,15 +63,4 @@ fn main(@builtin(global_invocation_id) globalIdx: vec3u) {
     // the bounding box's sides
     let scaledNoise = (noise + 0.5) * 0.8;
     lightSet.lights[lightIdx].pos = mix(bboxMin, bboxMax, scaledNoise);
-    // lightSet.lights[lightIdx].pos = lightIdx > 0.0 ? vec3f(10.0, 0.0, 0.0) : vec3f(0.0, 0.0, 0.0);
-    // if (lightIdx == 0)
-    // {
-    //     lightSet.lights[lightIdx].pos = vec3f(1.0, 1.0, 1.0);
-    // }
-    // else
-    // {
-    //     lightSet.lights[lightIdx].pos = vec3f(0.0, 0.0, 0.0);
-    // }
-    // lightSet.lights[lightIdx].pos = vec3f(10.0, 0.0, 0.0);
-    // lightSet.lights[lightIdx].color = vec3f(1.0, 1.0, 1.0);
 }

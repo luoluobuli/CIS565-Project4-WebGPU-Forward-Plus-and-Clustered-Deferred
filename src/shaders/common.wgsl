@@ -10,7 +10,7 @@ struct LightSet {
     lights: array<Light>
 }
 
-// TODO-2: you may want to create a ClusterSet struct similar to LightSet
+// DONE-2: you may want to create a ClusterSet struct similar to LightSet
 struct AABB { // 24 bytes
     minX : f32,
     maxX : f32,

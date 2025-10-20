@@ -11,7 +11,7 @@ class CameraUniforms {
         this.floatView.set(mat, 0);
     }
 
-    // TODO-2: add extra functions to set values needed for light clustering here
+    // DONE-2: add extra functions to set values needed for light clustering here
     set invProjMat(mat: Float32Array) { // 16 * 4 byets = 64 bytes
         this.floatView.set(mat, 16);
     }
@@ -156,7 +156,7 @@ export class Camera {
         // DONE-1.1: set `this.uniforms.viewProjMat` to the newly calculated view proj mat
         this.uniforms.viewProjMat = viewProjMat;
 
-        // TODO-2: write to extra buffers needed for light clustering here
+        // DONE-2: write to extra buffers needed for light clustering here
         this.uniforms.invProjMat = mat4.inverse(this.projMat);
         this.uniforms.viewMat = viewMat;
 

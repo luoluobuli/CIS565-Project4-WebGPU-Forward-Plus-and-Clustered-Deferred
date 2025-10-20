@@ -1,4 +1,4 @@
-// TODO-3: implement the Clustered Deferred G-buffer fragment shader
+// DONE-3: implement the Clustered Deferred G-buffer fragment shader
 
 // This shader should only store G-buffer information and should not do any shading.
 
@@ -21,15 +21,8 @@ struct FragmentOutput
 
 @fragment
 fn main(in: FragmentInput) -> FragmentOutput
-// fn main(in: FragmentInput) -> @location(0) vec4f
 {
     let diffuseColor = textureSample(diffuseTex, diffuseTexSampler, in.uv);
-    // return vec4(in.pos.xyz, 1.0);
-
-    // let diffuseColor = textureSample(diffuseTex, diffuseTexSampler, in.uv);
-    // if (diffuseColor.a < 0.5) {
-    //     discard;
-    // }
 
     var out: FragmentOutput;
     out.pos_out = vec4f(in.pos, 1.0);
