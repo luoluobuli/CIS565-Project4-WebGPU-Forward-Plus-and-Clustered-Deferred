@@ -39,8 +39,7 @@ export const constants = {
     clusterCountZ: 8,
 
     lightRadius: 2,
-    // maxLightsPerCluster: 500
-    maxLightsPerCluster: 64
+    maxLightsPerCluster: 512
 };
 
 // =================================
