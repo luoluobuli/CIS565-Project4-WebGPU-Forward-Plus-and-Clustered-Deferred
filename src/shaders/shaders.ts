@@ -45,7 +45,25 @@ export const constants = {
 // =================================
 
 function evalShaderRaw(raw: string) {
-    return eval('`' + raw.replaceAll('${', '${constants.') + '`');
+    //return eval('`' + raw.replaceAll('${', '${constants.') + '`');
+    return raw
+        .replace(/\$\{bindGroup_scene\}/g, constants.bindGroup_scene.toString())
+        .replace(/\$\{bindGroup_model\}/g, constants.bindGroup_model.toString())
+        .replace(/\$\{bindGroup_material\}/g, constants.bindGroup_material.toString())
+        .replace(/\$\{bindGroup_gbuffer\}/g, constants.bindGroup_gbuffer.toString())
+
+        .replace(/\$\{moveLightsWorkgroupSize\}/g, constants.moveLightsWorkgroupSize.toString())
+
+        .replace(/\$\{clusteringWorkgroupSizeX\}/g, constants.clusteringWorkgroupSizeX.toString())
+        .replace(/\$\{clusteringWorkgroupSizeY\}/g, constants.clusteringWorkgroupSizeY.toString())
+        .replace(/\$\{clusteringWorkgroupSizeZ\}/g, constants.clusteringWorkgroupSizeZ.toString())
+
+        .replace(/\$\{clusterCountX\}/g, constants.clusterCountX.toString())
+        .replace(/\$\{clusterCountY\}/g, constants.clusterCountY.toString())
+        .replace(/\$\{clusterCountZ\}/g, constants.clusterCountZ.toString())
+
+        .replace(/\$\{lightRadius\}/g, constants.lightRadius.toString())
+        .replace(/\$\{maxLightsPerCluster\}/g, constants.maxLightsPerCluster.toString());
 }
 
 const commonSrc: string = evalShaderRaw(commonRaw);
