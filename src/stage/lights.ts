@@ -109,7 +109,6 @@ export class Lights {
         const headerSize = 28; // aabb (24) + numLights (4)
         const lightBytes = 4 * shaders.constants.maxLightsPerCluster;
         const clusterSize = Math.ceil((headerSize + lightBytes) / 16) * 16; // round up to 16B
-        console.log(clusterSize);
 
         this.clusterSetStorageBuffer = device.createBuffer({
             label: "clusters",
